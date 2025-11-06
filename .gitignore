@@ -1,0 +1,91 @@
+# -----------------------------------
+# Python
+# -----------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.pdb
+*.so
+
+# Virtual environment
+venv/
+.env
+.env.bak
+.env.local
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+logs/
+log.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# -----------------------------------
+# FastAPI / Uvicorn / ASGI
+# -----------------------------------
+*.sqlite3
+*.db
+instance/
+*.pid
+*.sock
+
+# -----------------------------------
+# IDE / Editor
+# -----------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------------
+# OS files
+# -----------------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# -----------------------------------
+# Others
+# -----------------------------------
+# MyPy / Type checking
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Pyright
+typings/
+
+# Local test data
+tmp/
+temp/
