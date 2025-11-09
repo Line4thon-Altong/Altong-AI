@@ -2,6 +2,8 @@
 카드뉴스 이미지 생성 서비스
 """
 from app.core.openai_client import client
+from app.services.s3_service import upload_image_to_s3
+import os
 
 
 def generate_cardnews_image(prompt: str) -> str:
@@ -45,6 +47,7 @@ def generate_cardnews_image(prompt: str) -> str:
     """
     
     try:
+        # DALL-E 이미지 생성
         response = client.images.generate(
             model="dall-e-3",
             prompt=enhanced_prompt,
@@ -53,9 +56,19 @@ def generate_cardnews_image(prompt: str) -> str:
             n=1
         )
         
-        image_url = response.data[0].url
-        print(f"✅ 이미지 생성 완료: {image_url[:50]}...")
-        return image_url
+        temp_image_url = response.data[0].url
+        print(f"✅ DALL-E 이미지 생성 완료: {temp_image_url[:50]}...")
+        
+        # S3 업로드 (환경변수로 활성화/비활성화 가능)
+        use_s3 = os.getenv('USE_S3', 'false').lower() == 'true'
+        
+        if use_s3:
+            print("☁️  S3 업로드 시작...")
+            s3_url = upload_image_to_s3(temp_image_url, folder="cardnews")
+            return s3_url
+        else:
+            print("⚠️  S3 비활성화 - 임시 URL 사용 (1시간 후 만료)")
+            return temp_image_url
         
     except Exception as e:
         print(f"❌ 이미지 생성 실패: {e}")
