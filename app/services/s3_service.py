@@ -13,8 +13,8 @@ load_dotenv()
 # S3 클라이언트 생성
 s3_client = boto3.client(
     's3',
-    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), # 액세스 키  
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'), # 시크릿 키
     region_name=os.getenv('AWS_REGION', 'ap-northeast-2')
 )
 

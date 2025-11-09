@@ -60,13 +60,15 @@ def generate_cardnews_image(prompt: str) -> str:
         print(f"✅ DALL-E 이미지 생성 완료: {temp_image_url[:50]}...")
         
         # S3 업로드 (환경변수로 활성화/비활성화 가능)
-        use_s3 = os.getenv('USE_S3', 'false').lower() == 'true'
+        # 개발 시 false로 수정
+        # 실서비스에서 true로 수정
+        use_s3 = os.getenv('USE_S3', 'false').lower() == 'true' 
         
-        if use_s3:
+        if use_s3: # S3에 업로드 하는 코드
             print("☁️  S3 업로드 시작...")
             s3_url = upload_image_to_s3(temp_image_url, folder="cardnews")
-            return s3_url
-        else:
+            return s3_url # 영구 URL
+        else: # S3에 업로드 실패할 경우 임시 URL로 반환
             print("⚠️  S3 비활성화 - 임시 URL 사용 (1시간 후 만료)")
             return temp_image_url
         
