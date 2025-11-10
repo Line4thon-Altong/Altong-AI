@@ -1,11 +1,11 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class CardSlide(BaseModel):
     """개별 카드 슬라이드"""
     title: str  # 카드 제목
     content: List[str]  # 카드 내용 (여러 줄)
-    image_prompt: str  # 이미지 생성을 위한 프롬프트
+    scene_description: Optional[str] = ""  # 장면 설명 (한글)
     image_url: str = ""  # 생성된 4컷 만화 이미지 URL (전체 슬라이드 공통)
 
 class CardNewsRequest(BaseModel):
