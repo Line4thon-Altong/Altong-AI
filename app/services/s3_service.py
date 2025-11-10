@@ -18,7 +18,7 @@ s3_client = boto3.client(
     region_name=os.getenv('AWS_REGION', 'ap-northeast-2')
 )
 
-BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
+BUCKET_NAME = os.getenv('S3_BUCKET_NAME') # 버킷이름
 
 
 def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
@@ -36,16 +36,16 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
         # 1. 이미지 다운로드
         print(f"📥 이미지 다운로드 중: {image_url[:50]}...")
         response = requests.get(image_url, timeout=30)
-        response.raise_for_status()
+        response.raise_for_status() # 에러 발생 시 예외 던지기
         
         # 2. S3 업로드용 파일명 생성 (timestamp 기반)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{folder}/{timestamp}.png"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") # 20251110_053030 
+        filename = f"{folder}/{timestamp}.png" # cardnews/20251110_053030.png 이렇게 파일명 생김
         
         # 3. S3에 업로드
         print(f"☁️  S3 업로드 중: {filename}")
         s3_client.upload_fileobj(
-            BytesIO(response.content),
+            BytesIO(response.content), # 메모리 -> S3로 직접 업로드
             BUCKET_NAME,
             filename,
             ExtraArgs={
