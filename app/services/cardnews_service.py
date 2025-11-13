@@ -4,31 +4,48 @@ from app.services.image_service import generate_cardnews_image
 from app.models.cardnews_model import CardNewsResponse, CardSlide
 import json
 
+def flatten_context_chunks(context_chunks):
+    """
+    RAG 결과를 안전하게 문자열로 변환
+    """
+    flattened = []
+    for c in context_chunks:
+        if isinstance(c, dict):
+            # step + details 텍스트 합치기
+            step = c.get("step", "")
+            details = c.get("details", [])
+            if isinstance(details, list):
+                detail_text = " ".join([str(d) for d in details])
+            else:
+                detail_text = str(details)
+            flattened.append(f"{step} {detail_text}".strip())
+        elif isinstance(c, str):
+            flattened.append(c)
+        else:
+            flattened.append(str(c))
+    return "\n".join(flattened)
+
 def generate_cardnews(manual_id: int, tone: str, num_slides: int = 4):
-  """
-  매뉴얼 기반 카드뉴스 생성 (4컷, 동일 인물, 동일 유니폼, 단색 배경)
-  """
+    """
+    매뉴얼 기반 카드뉴스 생성 (4컷, 동일 인물, 동일 유니폼, 단색 배경)
+    """
 
-  # 1️⃣ 핵심 내용 검색 (tone 반영)
-  query = f"{tone} 톤으로 핵심 절차와 주요 포인트 요약"
-  context_chunks = retrieve_similar(manual_id, query, limit=8)
-  context = "\n".join(context_chunks)
+    # 1️⃣ 핵심 내용 검색 (RAG)
+    context_chunks = retrieve_similar(manual_id, "핵심 절차와 주요 포인트", limit=8)
+    context = flatten_context_chunks(context_chunks) # flatten 적용 
 
-  # 2️⃣ GPT 카드뉴스 구성 생성 (tone / num_slides 반영)
-  prompt = f"""
+    # 2️⃣ GPT 카드뉴스 구성 생성
+    prompt = f"""
 너는 직장인/알바생을 위한 교육 카드뉴스를 만드는 전문가야.
-아래 교육 매뉴얼을 읽고, **{num_slides}개의 카드**로 핵심 내용을 요약해줘.
-
-### 톤(Tone)
-'{tone}' 말투로 자연스럽고 이해하기 쉽게 작성해줘.
+아래 교육 매뉴얼을 읽고, 4개의 카드로 핵심 내용을 요약해줘.
 
 ### 교육 매뉴얼
 {context}
 
 ### 구성
 1. 1번 카드: 인사/시작
-2. 2~{num_slides - 1}번 카드: 핵심 절차 및 팁
-3. {num_slides}번 카드: 마무리/당부
+2. 2~3번 카드: 핵심 절차 및 팁
+3. 4번 카드: 마무리/당부
 
 ### 출력 형식 (JSON)
 {{
@@ -37,74 +54,76 @@ def generate_cardnews(manual_id: int, tone: str, num_slides: int = 4):
     {{
       "title": "1. 인사는 밝게!",
       "content": ["손님이 들어오면 먼저 웃으며 인사해요 👋"],
-      "scene_description": "카페 유니폼을 입은 한국인 직원이 손을 흔드는 장면, 크림색 단색 배경"
+      "scene_description": "검은색 정장을 입은 한국인 직원이 손을 흔드는 장면, 크림색 단색 배경"
     }}
   ]
 }}
 
 ### 장면 묘사 규칙
 - 인물은 반드시 한국인(Korean worker)
-- ONE person only / SAME uniform & appearance across all panels
+- ONE person only / SAME uniform & appearance across all 4 panels
 - Solid cream background (completely empty)
 - Only facial expression and pose differ
-- 업종(예: 카페, 음식점, 편의점)에 맞는 유니폼 및 간단한 소품 반영
 - Simple props OK (calculator, POS, clipboard)
 - Props use abstract shapes (short lines, dots, blank rectangles)
 - No readable text, numbers, symbols, labels, reflections, or speech bubbles
 """
 
-  response = client.chat.completions.create(
-      model="gpt-4o-mini",
-      messages=[
-        {
-          "role": "system",
-          "content": (
-            "매뉴얼을 읽고 업종을 파악한 뒤 JSON 생성. "
-            "scene_description은 한 명의 한국인 직원, 동일 유니폼과 외형, 단색 크림 배경, "
-            "표정과 포즈만 다르게. 소품은 추상 패턴만 허용, "
-            "글자·숫자·라벨·말풍선 금지."
-          ),
-        },
-        {"role": "user", "content": prompt},
-      ],
-      temperature=0.6,
-  )
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "매뉴얼을 읽고 업종을 파악한 뒤 JSON 생성. "
+                    "scene_description은 한 명의 한국인 직원, 동일 유니폼과 외형, 단색 크림 배경, "
+                    "표정과 포즈만 다르게. 소품은 추상 패턴만 허용, "
+                    "글자·숫자·라벨·말풍선 금지."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.6,
+    )
 
-  content = response.choices[0].message.content.strip()
-  content = content.replace("```json", "").replace("```", "").strip()
+    content = response.choices[0].message.content.strip()
+    content = content.replace("```json", "").replace("```", "").strip()
 
-  try:
-    data = json.loads(content)
-    print("🎨 4컷 카드뉴스 이미지 생성 중...")
+    try:
+        data = json.loads(content)
+        print("🎨 4컷 카드뉴스 이미지 생성 중...")
 
-    # 3️⃣ 이미지용 프롬프트 생성 (tone 반영 포함)
-    four_panel_prompt = create_four_panel_prompt(data["slides"], tone)
-    single_image_url = generate_cardnews_image(four_panel_prompt)
+        # 3️⃣ 4컷 이미지용 프롬프트 생성
+        four_panel_prompt = create_four_panel_prompt(data["slides"])
+        single_image_url = generate_cardnews_image(four_panel_prompt)
 
-    slides = []
-    for slide_data in data["slides"]:
-      slide = CardSlide(**slide_data)
-      slide.image_url = single_image_url
-      slides.append(slide)
+        # 4️⃣ 슬라이드 구성
+        slides = []
+        for slide_data in data["slides"]:
+            slide = CardSlide(**slide_data)
+            slide.image_url = single_image_url
+            slides.append(slide)
 
-    return CardNewsResponse(title=data["title"], slides=slides)
+        return CardNewsResponse(title=data["title"], slides=slides)
 
-  except Exception as e:
-    raise ValueError(f"카드뉴스 파싱 실패: {e}\n응답: {content}")
+    except Exception as e:
+        raise ValueError(f"카드뉴스 파싱 실패: {e}\n응답: {content}")
 
 
-# tone 추가 반영
-def create_four_panel_prompt(slides: list, tone: str) -> str:
-  """4컷 카드뉴스(2x2)용 영어 프롬프트 생성"""
-  scene_descriptions = []
-  for i, slide in enumerate(slides, 1):
-    desc = slide.get("scene_description", "직원이 일하는 장면")
-    title = slide.get("title", f"Panel {i}")
-    content = slide.get("content", [""])[0]
-    scene_descriptions.append(f"Panel {i}: {title} — {content}. Scene: {desc}")
+def create_four_panel_prompt(slides: list) -> str:
+    """4컷 카드뉴스(2x2)용 영어 프롬프트 생성"""
 
-  translation_prompt = f"""
-Translate these {len(slides)} Korean scene descriptions into English.
+    scene_descriptions = []
+    for i, slide in enumerate(slides, 1):
+        desc = slide.get("scene_description", "직원이 일하는 장면")
+        title = slide.get("title", f"Panel {i}")
+        content = slide.get("content", [""])[0]
+        scene_descriptions.append(
+            f"Panel {i}: {title} — {content}. Scene: {desc}"
+        )
+
+    translation_prompt = f"""
+Translate these 4 Korean scene descriptions into English.
 Each must clearly describe what happens in each panel.
 
 Scenes:
@@ -120,29 +139,28 @@ Rules:
 - Exactly 4 lines, one per panel
 - All 4 panels must show ONE identical Korean employee (same face, same uniform)
 - Each panel shows the specific action described
-- Each panel’s emotion or gesture should reflect the '{tone}' tone
 - Solid cream background, completely empty
 - No text, numbers, or symbols in the drawing
 """
 
-  translation_response = client.chat.completions.create(
-      model="gpt-4o-mini",
-      messages=[
-        {
-          "role": "system",
-          "content": (
-            "Translate into concise English. Each panel = one frame of a 4-panel comic. "
-            "Ensure all panels use the same character and outfit."
-          ),
-        },
-        {"role": "user", "content": translation_prompt},
-      ],
-      temperature=0.3,
-  )
+    translation_response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Translate into concise English. Each panel = one frame of a 4-panel comic. "
+                    "Keep all panels consistent with same character and background."
+                ),
+            },
+            {"role": "user", "content": translation_prompt},
+        ],
+        temperature=0.3,
+    )
 
-  panel_prompts = translation_response.choices[0].message.content.strip()
+    panel_prompts = translation_response.choices[0].message.content.strip()
 
-  four_panel_prompt = f"""
+    four_panel_prompt = f"""
 Create ONE image containing a 4-panel comic in a 2x2 grid (EXACTLY 4 panels, NOT 9).
 Each panel corresponds to the following scenes:
 
@@ -156,7 +174,6 @@ IMPORTANT STRUCTURE:
 - Each panel must show the correct scene based on its description above
 - 4 distinct but connected scenes, all within one image
 - Same Korean employee appears in all 4 panels
-- Each panel’s emotion or pose matches the '{tone}' tone
 
 STYLE:
 - Flat, clean Korean webtoon style
@@ -177,4 +194,4 @@ FORBIDDEN:
 - No readable text, numbers, or letters anywhere
 - No sparkle, hearts, reflections, or speech bubbles
 """
-  return four_panel_prompt
+    return four_panel_prompt

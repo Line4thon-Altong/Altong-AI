@@ -3,9 +3,9 @@ from app.services.s3_service import upload_image_to_s3
 import os
 
 def generate_cardnews_image(prompt: str) -> str:
-  """DALL-E 3로 4컷 카드뉴스 이미지 생성 (2x2 grid, identical character, 4 distinct scenes)"""
+    """DALL-E 3로 4컷 카드뉴스 이미지 생성 (2x2 grid, identical character, 4 distinct scenes)"""
 
-  enhanced_prompt = f"""
+    enhanced_prompt = f"""
 Create ONE image that is a 4-panel comic arranged in a 2x2 grid (EXACTLY 4 panels, NOT 9).
 Each panel must represent the distinct scenes described below, corresponding to Panel 1–4.
 Ensure all 4 panels appear clearly separated with thick black borders.
@@ -36,27 +36,26 @@ FORBIDDEN:
 Ensure the final output is ONE image showing four separate panels (2 on top, 2 on bottom).
 """
 
-  try:
-    # 이미지 사이즈 + 퀄리티 업그레이드
-    response = client.images.generate(
-        model="dall-e-3",
-        prompt=enhanced_prompt,
-        size="1792x1024",  # 가로 4컷 또는 2x2 구조에 최적
-        quality="hd",      # 고해상도 옵션
-        n=1,
-    )
+    try:
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=enhanced_prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
 
-    image_url = response.data[0].url
-    print(f"✅ 이미지 생성 완료: {image_url}")
+        image_url = response.data[0].url
+        print(f"✅ 이미지 생성 완료: {image_url}")
 
-    use_s3 = os.getenv("USE_S3", "false").lower() == "true"
-    if use_s3:
-      print("☁️  S3 업로드 중...")
-      return upload_image_to_s3(image_url, folder="cardnews")
-    else:
-      print("⚠️  S3 비활성화 - 임시 URL 사용")
-      return image_url
+        use_s3 = os.getenv("USE_S3", "false").lower() == "true"
+        if use_s3:
+            print("☁️  S3 업로드 중...")
+            return upload_image_to_s3(image_url, folder="cardnews")
+        else:
+            print("⚠️  S3 비활성화 - 임시 URL 사용")
+            return image_url
 
-  except Exception as e:
-    print(f"❌ 이미지 생성 실패: {e}")
-    return ""
+    except Exception as e:
+        print(f"❌ 이미지 생성 실패: {e}")
+        return ""
