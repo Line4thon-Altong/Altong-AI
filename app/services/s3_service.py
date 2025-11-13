@@ -94,4 +94,3 @@ def delete_image_from_s3(s3_url: str) -> bool:
     except Exception as e:
         print(f"❌ S3 삭제 실패: {e}")
         return False
-
