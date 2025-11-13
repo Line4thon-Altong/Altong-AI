@@ -4,6 +4,26 @@ from app.services.image_service import generate_cardnews_image
 from app.models.cardnews_model import CardNewsResponse, CardSlide
 import json
 
+def flatten_context_chunks(context_chunks):
+    """
+    RAG 결과를 안전하게 문자열로 변환
+    """
+    flattened = []
+    for c in context_chunks:
+        if isinstance(c, dict):
+            # step + details 텍스트 합치기
+            step = c.get("step", "")
+            details = c.get("details", [])
+            if isinstance(details, list):
+                detail_text = " ".join([str(d) for d in details])
+            else:
+                detail_text = str(details)
+            flattened.append(f"{step} {detail_text}".strip())
+        elif isinstance(c, str):
+            flattened.append(c)
+        else:
+            flattened.append(str(c))
+    return "\n".join(flattened)
 
 def generate_cardnews(manual_id: int, tone: str, num_slides: int = 4):
     """
@@ -12,7 +32,7 @@ def generate_cardnews(manual_id: int, tone: str, num_slides: int = 4):
 
     # 1️⃣ 핵심 내용 검색 (RAG)
     context_chunks = retrieve_similar(manual_id, "핵심 절차와 주요 포인트", limit=8)
-    context = "\n".join(context_chunks)
+    context = flatten_context_chunks(context_chunks) # flatten 적용 
 
     # 2️⃣ GPT 카드뉴스 구성 생성
     prompt = f"""

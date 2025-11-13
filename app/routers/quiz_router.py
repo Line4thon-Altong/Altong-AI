@@ -7,6 +7,6 @@ router = APIRouter(prefix="/quiz", tags=["Quiz"])
 @router.post("/generate", response_model=QuizResponse)
 def create_quiz(request: QuizRequest):
     try:
-        return generate_quiz(request.manual_id, request.tone)
+        return generate_quiz(request.manual_id, request.tone, request.focus)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
