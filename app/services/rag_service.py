@@ -35,7 +35,7 @@ def chunk_text(manual_json):
     for prec in manual_json.get("precaution", []):
         chunks.append({"type": "precaution", "content": prec})
 
-    logger.info(f"🧩 [RAG] chunk_text() 완료 | 총 {len(chunks)}개 chunk 생성")
+    logger.info(f"[RAG] chunk_text() 완료 | 총 {len(chunks)}개 chunk 생성")
     return chunks
 
 def embed_manual(manual_id: int, manual_json: dict):
@@ -43,7 +43,7 @@ def embed_manual(manual_id: int, manual_json: dict):
     매뉴얼의 각 절차(step, details)를 구조화된 JSON으로 embedding 저장.
     """
     chunks = chunk_text(manual_json)
-    logger.info(f"🚀 [RAG] 임베딩 시작 | manual_id={manual_id}, chunk_count={len(chunks)}")
+    logger.info(f"[RAG] 임베딩 시작 | manual_id={manual_id}, chunk_count={len(chunks)}")
 
     for i, chunk in enumerate(chunks):
         try:

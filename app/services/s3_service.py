@@ -34,7 +34,7 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
     """
     try:
         # 이미지 다운로드
-        print(f"📥 이미지 다운로드 중: {image_url[:50]}...")
+        print(f"이미지 다운로드 중: {image_url[:50]}...")
         response = requests.get(image_url, timeout=30)
         response.raise_for_status() # 에러 발생 시 예외 던지기
         
@@ -43,7 +43,7 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
         filename = f"{folder}/{timestamp}.png" # cardnews/20251110_053030.png 이렇게 파일명 생김
         
         # S3에 업로드
-        print(f"☁️  S3 업로드 중: {filename}")
+        print(f"S3 업로드 중: {filename}")
         s3_client.upload_fileobj(
             BytesIO(response.content), # 메모리 -> S3로 직접 업로드
             BUCKET_NAME,
@@ -57,7 +57,7 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
         # S3 URL 생성
         s3_url = f"https://{BUCKET_NAME}.s3.{os.getenv('AWS_REGION', 'ap-northeast-2')}.amazonaws.com/{filename}"
         
-        print(f"✅ S3 업로드 완료: {s3_url}")
+        print(f"S3 업로드 완료: {s3_url}")
         return s3_url
         
     except requests.exceptions.RequestException as e:
