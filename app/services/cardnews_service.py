@@ -135,7 +135,7 @@ Generate the JSON now.
         # 최종 검증
         assert len(slides) == 4, f"slides는 4개여야 하는데 {len(slides)}개"
         
-        logger.info(f"✅ [CARDNEWS] 핵심 포인트 정리 완료 | slides={len(slides)}")
+        logger.info(f"[CARDNEWS] 핵심 포인트 정리 완료 | slides={len(slides)}")
 
         # contents 기반 이미지 생성
         four_panel_prompt = create_four_panel_prompt_from_contents(slides) # 4컷용 프롬프트 구성을 위한 함수

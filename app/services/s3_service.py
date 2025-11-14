@@ -33,16 +33,16 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
         S3 영구 URL
     """
     try:
-        # 1. 이미지 다운로드
+        # 이미지 다운로드
         print(f"📥 이미지 다운로드 중: {image_url[:50]}...")
         response = requests.get(image_url, timeout=30)
         response.raise_for_status() # 에러 발생 시 예외 던지기
         
-        # 2. S3 업로드용 파일명 생성 (timestamp 기반)
+        # S3 업로드용 파일명 생성 (timestamp 기반)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") # 20251110_053030 
         filename = f"{folder}/{timestamp}.png" # cardnews/20251110_053030.png 이렇게 파일명 생김
         
-        # 3. S3에 업로드
+        # S3에 업로드
         print(f"☁️  S3 업로드 중: {filename}")
         s3_client.upload_fileobj(
             BytesIO(response.content), # 메모리 -> S3로 직접 업로드
@@ -54,19 +54,19 @@ def upload_image_to_s3(image_url: str, folder: str = "cardnews") -> str:
             }
         )
         
-        # 4. S3 URL 생성
+        # S3 URL 생성
         s3_url = f"https://{BUCKET_NAME}.s3.{os.getenv('AWS_REGION', 'ap-northeast-2')}.amazonaws.com/{filename}"
         
         print(f"✅ S3 업로드 완료: {s3_url}")
         return s3_url
         
     except requests.exceptions.RequestException as e:
-        print(f"❌ 이미지 다운로드 실패: {e}")
+        print(f"이미지 다운로드 실패: {e}")
         # 실패 시 원본 URL 반환 (fallback)
         return image_url
         
     except Exception as e:
-        print(f"❌ S3 업로드 실패: {e}")
+        print(f"S3 업로드 실패: {e}")
         # 실패 시 원본 URL 반환 (fallback)
         return image_url
 
@@ -88,9 +88,9 @@ def delete_image_from_s3(s3_url: str) -> bool:
         filename = s3_url.split(f"{BUCKET_NAME}.s3.")[-1].split('/', 1)[-1]
         
         s3_client.delete_object(Bucket=BUCKET_NAME, Key=filename)
-        print(f"🗑️  S3 삭제 완료: {filename}")
+        print(f"S3 삭제 완료: {filename}")
         return True
         
     except Exception as e:
-        print(f"❌ S3 삭제 실패: {e}")
+        print(f"S3 삭제 실패: {e}")
         return False

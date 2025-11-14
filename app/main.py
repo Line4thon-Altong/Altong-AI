@@ -1,5 +1,11 @@
 from fastapi import FastAPI
 from app.routers import manual_router, quiz_router, rag_router, cardnews_router
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+)
 
 # FastAPI 앱 생성
 app = FastAPI(
